@@ -1,5 +1,5 @@
-﻿using Masasamjant.Repositories.Abstractions;
-using Masasamjant.Repositories.Configuration;
+﻿using Masasamjant.Configuration;
+using Masasamjant.Repositories.Abstractions;
 using Microsoft.Extensions.Configuration;
 
 namespace Masasamjant.Repositories
