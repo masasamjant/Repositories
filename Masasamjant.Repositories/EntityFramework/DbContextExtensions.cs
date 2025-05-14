@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Masasamjant.Repositories.Abstractions;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace Masasamjant.Repositories.EntityFramework
@@ -9,7 +10,7 @@ namespace Masasamjant.Repositories.EntityFramework
     public static class DbContextExtensions
     {
         /// <summary>
-        /// Gets the query string of spcified criteria expression.
+        /// Gets the query string of specified criteria expression.
         /// </summary>
         /// <typeparam name="TEntity">The type of the entity.</typeparam>
         /// <param name="context">The <see cref="DbContext"/>.</param>
@@ -19,9 +20,38 @@ namespace Masasamjant.Repositories.EntityFramework
         {
             try
             {
-                var query = context.Set<TEntity>().Where(expression);
-                var queryText = query.ToQueryString();
-                return queryText;
+                return context.Set<TEntity>().GetQueryString(expression);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the query string of specified criteria expression.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity.</typeparam>
+        /// <param name="set">The <see cref="DbSet{TEntity}"/>.</param>
+        /// <param name="expression">The criteria expression.</param>
+        /// <returns>A query string or <c>null</c>.</returns>
+        public static string? GetQueryString<TEntity>(this DbSet<TEntity> set, Expression<Func<TEntity, bool>> expression) where TEntity : class
+        {
+            try
+            {
+                return set.Where(expression).ToQueryString();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        internal static string? GetQueryString<TEntity>(this IRepositoryEntries<TEntity> entries, Expression<Func<TEntity, bool>> expression) where TEntity : class
+        {
+            try
+            {
+                return entries.Where(expression).ToQueryString();
             }
             catch (Exception)
             {

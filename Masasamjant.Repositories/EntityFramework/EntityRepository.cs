@@ -51,7 +51,7 @@ namespace Masasamjant.Repositories.EntityFramework
             {
                 await OnAddAsync(instance, cancellationToken);
 
-                var entry = await Set<T>().AddAsync(instance, cancellationToken);
+                var entry = await GetEntries<T>().AddAsync(instance, cancellationToken);
 
                 if (saveChanges)
                     await SaveChangesAsync(cancellationToken);
@@ -91,9 +91,11 @@ namespace Masasamjant.Repositories.EntityFramework
         {
             CheckDisposed();
 
+            var entries = GetEntries<T>();
+
             try
             {
-                bool exists = await Set<T>().AnyAsync(specification.Criteria, cancellationToken);
+                bool exists = await entries.AnyAsync(specification.Criteria, cancellationToken);
 
                 return exists;
             }
@@ -102,9 +104,9 @@ namespace Masasamjant.Repositories.EntityFramework
                 if (exception is OperationCanceledException)
                     throw;
                 else 
-                { 
-                    var queryText = DbContextExtensions.GetQueryString(this, specification.Criteria);
-                    throw RepositoryHelper.HandleRepositoryException("Exists", null, exception);
+                {
+                    var queryText = entries.GetQueryString(specification.Criteria);
+                    throw RepositoryHelper.HandleRepositoryException("Exists", queryText, exception);
                 }
             }
         }
@@ -124,7 +126,7 @@ namespace Masasamjant.Repositories.EntityFramework
 
             try
             {
-                var result = await Set<T>().ToListAsync(cancellationToken);
+                var result = await GetEntries<T>().ToListAsync(cancellationToken);
 
                 return result;
             }
@@ -157,9 +159,9 @@ namespace Masasamjant.Repositories.EntityFramework
                 List<T> result;
 
                 if (entitySpecification.NoTracking)
-                    result = await Set<T>().Where(entitySpecification.Criteria).AsNoTracking().ToListAsync(cancellationToken);
+                    result = await GetEntries<T>().Where(entitySpecification.Criteria).AsNoTracking().ToListAsync(cancellationToken);
                 else
-                    result = await Set<T>().Where(entitySpecification.Criteria).ToListAsync(cancellationToken);
+                    result = await GetEntries<T>().Where(entitySpecification.Criteria).ToListAsync(cancellationToken);
 
                 return result;
             }
@@ -187,7 +189,7 @@ namespace Masasamjant.Repositories.EntityFramework
 
             try
             {
-                return Set<T>();
+                return GetEntries<T>();
             }
             catch (Exception exception)
             {
@@ -207,17 +209,18 @@ namespace Masasamjant.Repositories.EntityFramework
             CheckDisposed();
 
             var entitySpecification = GetEntityQuerySpecification(specification);
+            var entries = GetEntries<T>();
 
             try
             {
                 if (entitySpecification.NoTracking)
-                    return Set<T>().AsNoTracking();
+                    return entries.AsNoTracking();
                 else
-                    return Set<T>();
+                    return entries;
             }
             catch (Exception exception)
             {
-                var queryText = DbContextExtensions.GetQueryString(this, entitySpecification.Criteria);
+                var queryText = DbContextExtensions.GetQueryString(entries, entitySpecification.Criteria);
                 throw RepositoryHelper.HandleRepositoryException("Query", queryText, exception);
             }
         }
@@ -241,7 +244,7 @@ namespace Masasamjant.Repositories.EntityFramework
             {
                 await OnRemoveAsync(instance, cancellationToken);
 
-                var entry = Set<T>().Remove(instance);
+                var entry = GetEntries<T>().Remove(instance);
 
                 if (saveChanges)
                     await SaveChangesAsync(cancellationToken);
@@ -273,7 +276,7 @@ namespace Masasamjant.Repositories.EntityFramework
             
             try
             {
-                return await base.SaveChangesAsync(true, cancellationToken);
+                return await DoSaveChangesAsync(true, cancellationToken);
             }
             catch (DbUpdateConcurrencyException exception)
             {
@@ -309,7 +312,7 @@ namespace Masasamjant.Repositories.EntityFramework
             {
                 await OnUpdateAsync(instance, cancellationToken);
 
-                var entry = Set<T>().Update(instance);
+                var entry = GetEntries<T>().Update(instance);
 
                 if (saveChanges)
                     await SaveChangesAsync(cancellationToken);
@@ -374,6 +377,23 @@ namespace Masasamjant.Repositories.EntityFramework
             else
                 optionsBuilder.UseSqlServer(connectionString);
         }
+
+        /// <summary>
+        /// Gets the entries of <typeparamref name="T"/> in repository.
+        /// </summary>
+        /// <typeparam name="T">The type the item.</typeparam>
+        /// <returns>A <see cref="IRepositoryEntries{T}"/> of <typeparamref name="T"/>.</returns>
+        protected virtual IRepositoryEntries<T> GetEntries<T>() where T : class
+            => new EntityRepositoryEntries<T>(Set<T>());
+
+        /// <summary>
+        /// Save changes made to entities.
+        /// </summary>
+        /// <param name="acceptAllChangesOnSuccess"><c>true</c> to accept all changes when success; <c>false</c> otherwise.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A count of affected entities.</returns>
+        protected virtual Task<int> DoSaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+            => base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
         /// <summary>
         /// Invoked before <typeparamref name="T"/> instance is added to context.
