@@ -7,20 +7,20 @@ namespace Masasamjant.Repositories
     /// <summary>
     /// Represents provider of connection string that reads connection string value from configuration.
     /// </summary>
-    public sealed class ConnectionStringProvider : IConnectionStringProvider
+    public sealed class ConfigurationConnectionStringProvider : IConnectionStringProvider
     {
         private IConfiguration configuration;
         private readonly IEnumerable<string> sectionKeys;
         private readonly string connectionStringKey;
 
         /// <summary>
-        /// Initializes new instance of the <see cref="ConnectionStringProvider"/> class.
+        /// Initializes new instance of the <see cref="ConfigurationConnectionStringProvider"/> class.
         /// </summary>
         /// <param name="configuration">The <see cref="IConfiguration"/>.</param>
         /// <param name="connectionStringKey">The configuration key of connection string value.</param>
         /// <param name="sectionKeys">The names of configuration sections.</param>
         /// <exception cref="ArgumentNullException">If <paramref name="connectionStringKey"/> is empty or contains only whitespace characters.</exception>
-        public ConnectionStringProvider(IConfiguration configuration, string connectionStringKey, IEnumerable<string>? sectionKeys = null)
+        public ConfigurationConnectionStringProvider(IConfiguration configuration, string connectionStringKey, IEnumerable<string>? sectionKeys = null)
         {
             if (string.IsNullOrWhiteSpace(connectionStringKey))
                 throw new ArgumentNullException(nameof(connectionStringKey), "The connection string key cannot be empty or only whitespace characters.");

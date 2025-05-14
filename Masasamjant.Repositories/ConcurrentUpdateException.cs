@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents exception thrown when concurrent update occurs.
     /// </summary>
-    public class ConcurrentUpdateException : Exception
+    public class ConcurrentUpdateException : RepositoryException
     {
         /// <summary>
         /// Initializes new default instance of the <see cref="ConcurrentUpdateException"/> class.
@@ -36,7 +36,7 @@
         /// <param name="items">The items related to concurrent update.</param>
         /// <param name="innerException">The inner exception.</param>
         public ConcurrentUpdateException(string message, IEnumerable<ConcurrentUpdateItem>? items, Exception? innerException)
-            : base(message, innerException) 
+            : base(message, null, innerException) 
         {
             Items = items ?? [];
         }
