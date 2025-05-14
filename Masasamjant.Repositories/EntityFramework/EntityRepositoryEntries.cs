@@ -79,6 +79,15 @@ namespace Masasamjant.Repositories.EntityFramework
             return new RepositoryEntry<T>(entry.Entity);
         }
 
+        /// <summary>
+        /// Gets enumerator to iterate over the entries.
+        /// </summary>
+        /// <returns>A enumerator to iterate entries.</returns>
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        {
+            return set.GetAsyncEnumerator(cancellationToken);
+        }
+
         Type IQueryable.ElementType => ((IQueryable)set).ElementType;
 
         Expression IQueryable.Expression => ((IQueryable)set).Expression;
@@ -89,6 +98,5 @@ namespace Masasamjant.Repositories.EntityFramework
         {
             return this.GetEnumerator();
         }
-
     }
 }

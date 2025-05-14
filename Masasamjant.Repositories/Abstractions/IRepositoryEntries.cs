@@ -4,7 +4,7 @@
     /// Represents entries of <typeparamref name="T"/> in repository.
     /// </summary>
     /// <typeparam name="T">The type of the entry item.</typeparam>
-    public interface IRepositoryEntries<T> : IQueryable<T>, IQueryable where T : class
+    public interface IRepositoryEntries<T> : IQueryable<T>, IQueryable, IAsyncEnumerable<T> where T : class
     {
         /// <summary>
         /// Adds the specified entity to the repository.
