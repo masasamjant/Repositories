@@ -58,5 +58,13 @@ namespace Masasamjant.Repositories.EntityFramework
                 return null;
             }
         }
+
+        internal static IQueryable<T> ToAsyncQueryable<T>(this IQueryable<T> query)
+        {
+            if (query is IAsyncEnumerable<T>)
+                return query;
+
+            return new AsyncEnumerable<T>(query);
+        }
     }
 }

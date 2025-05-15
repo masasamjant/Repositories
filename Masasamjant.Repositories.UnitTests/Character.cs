@@ -2,21 +2,25 @@
 {
     public class Character : IEquatable<Character>
     {
-        public Character(string firstName, string lastName)
+        public Character(Guid identifier, string firstName, string lastName)
         {
+            Identifier = identifier;
             FirstName = firstName;
             LastName = lastName;
         }
 
-        public string FirstName { get; }
+        public Character()
+        { }
 
-        public string LastName { get; }
+        public Guid Identifier { get; internal set; } = Guid.NewGuid();
+
+        public string FirstName { get; internal set; } = string.Empty;
+
+        public string LastName { get; internal set; } = string.Empty;
 
         public bool Equals(Character? other)
         {
-            return other != null &&
-                FirstName == other.FirstName &&
-                LastName == other.LastName;
+            return other != null && Identifier.Equals(other.Identifier);
         }
 
         public override bool Equals(object? obj)
@@ -26,7 +30,7 @@
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(FirstName, LastName);
+            return HashCode.Combine(Identifier);
         }
     }
 }

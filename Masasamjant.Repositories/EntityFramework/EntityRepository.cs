@@ -159,9 +159,9 @@ namespace Masasamjant.Repositories.EntityFramework
                 List<T> result;
 
                 if (entitySpecification.NoTracking)
-                    result = await GetEntries<T>().Where(entitySpecification.Criteria).AsNoTracking().ToListAsync(cancellationToken);
+                    result = await GetEntries<T>().Where(entitySpecification.Criteria).ToAsyncQueryable().AsNoTracking().ToListAsync(cancellationToken);
                 else
-                    result = await GetEntries<T>().Where(entitySpecification.Criteria).ToListAsync(cancellationToken);
+                    result = await GetEntries<T>().Where(entitySpecification.Criteria).ToAsyncQueryable().ToListAsync(cancellationToken);
 
                 return result;
             }
@@ -189,7 +189,7 @@ namespace Masasamjant.Repositories.EntityFramework
 
             try
             {
-                return GetEntries<T>();
+                return GetEntries<T>().ToAsyncQueryable();
             }
             catch (Exception exception)
             {
@@ -214,9 +214,9 @@ namespace Masasamjant.Repositories.EntityFramework
             try
             {
                 if (entitySpecification.NoTracking)
-                    return entries.AsNoTracking();
+                    return entries.Where(entitySpecification.Criteria).ToAsyncQueryable().AsNoTracking();
                 else
-                    return entries;
+                    return entries.Where(entitySpecification.Criteria).ToAsyncQueryable();
             }
             catch (Exception exception)
             {
