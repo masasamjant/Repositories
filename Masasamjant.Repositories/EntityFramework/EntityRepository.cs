@@ -12,6 +12,9 @@ namespace Masasamjant.Repositories.EntityFramework
         private EntityRepositoryTransaction? transaction;
         private readonly AutoResetEvent transactionResetEvent = new AutoResetEvent(true);
 
+        /// <summary>
+        /// Default value of <see cref="BeginTransactionTimeoutSeconds"/> is 60 seconds.
+        /// </summary>
         protected const int DefaultTransactionTimeoutSeconds = 60;
 
         /// <summary>
