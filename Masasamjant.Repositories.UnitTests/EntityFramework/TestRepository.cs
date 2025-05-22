@@ -20,7 +20,17 @@ namespace Masasamjant.Repositories.EntityFramework
         protected override Task<int> DoSaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken)
         {
             saveChangesCallback?.Invoke();
-            return Task.FromResult(1);
+            if (useMemoryEntries)
+                return Task.FromResult(1);
+            else
+                return base.DoSaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            if (!useMemoryEntries)
+                modelBuilder.ApplyConfiguration(new CharacterConfiguration());
         }
 
         protected override IRepositoryEntries<T> GetEntries<T>()

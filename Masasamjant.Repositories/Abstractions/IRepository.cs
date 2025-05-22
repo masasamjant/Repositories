@@ -103,5 +103,14 @@
         /// <exception cref="ConcurrentUpdateException">If concurrent update error occurs.</exception>
         /// <exception cref="OperationCanceledException">If operation is cancelled.</exception>
         Task<T> UpdateAsync<T>(T instance, bool saveChanges = false, CancellationToken cancellationToken = default) where T : class;
+
+        /// <summary>
+        /// Begins new transaction. Repository supports only one transaction at a time.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException">If transactions are not supported.</exception>
+        /// <exception cref="InvalidOperationException">If cannot begin new transaction.</exception>
+        Task<IRepositoryTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     }
 }

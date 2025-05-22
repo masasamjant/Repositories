@@ -9,6 +9,10 @@ namespace Masasamjant.Repositories.EntityFramework
     public class EntityRepository : DbContext, IRepository, IDisposable
     {
         private readonly IConnectionStringProvider connectionStringProvider;
+        private EntityRepositoryTransaction? transaction;
+        private readonly AutoResetEvent transactionResetEvent = new AutoResetEvent(true);
+
+        protected const int DefaultTransactionTimeoutSeconds = 60;
 
         /// <summary>
         /// Initializes new instance of the <see cref="EntityRepository"/> class.
@@ -31,6 +35,14 @@ namespace Masasamjant.Repositories.EntityFramework
         /// Gets whether or not instance is disposed.
         /// </summary>
         protected bool IsDisposed { get; private set; }
+
+        /// <summary>
+        /// Gets the timeout in seconds for attempt to create transaction.
+        /// </summary>
+        protected virtual int BeginTransactionTimeoutSeconds
+        {
+            get { return DefaultTransactionTimeoutSeconds; }
+        }
 
         /// <summary>
         /// Add specified <typeparamref name="T"/> instance to repository.
@@ -331,6 +343,45 @@ namespace Masasamjant.Repositories.EntityFramework
         }
 
         /// <summary>
+        /// Begins new transaction. Repository supports only one transaction at a time.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException">If transactions are not supported.</exception>
+        /// <exception cref="InvalidOperationException">If cannot begin new transaction.</exception>
+        public virtual async Task<IRepositoryTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            int transactionTimeout = BeginTransactionTimeoutSeconds;
+
+            if (transactionTimeout < 1)
+                transactionTimeout = DefaultTransactionTimeoutSeconds;
+
+            bool raiseResetEvent = false;
+
+            try
+            {
+                transactionResetEvent.WaitOne(TimeSpan.FromSeconds(transactionTimeout));
+                raiseResetEvent = true;
+
+                CheckCurrentTransaction();
+                var contextTransaction = await Database.BeginTransactionAsync(cancellationToken);
+                transaction = new EntityRepositoryTransaction(contextTransaction, transactionTimeout);
+                return transaction;
+            }
+            catch (AbandonedMutexException exception)
+            {
+                throw new InvalidOperationException($"Transaction creation timeouted in {transactionTimeout} seconds.", exception);
+            }
+            finally
+            {
+                if (raiseResetEvent)
+                    transactionResetEvent.Set();
+            }
+        }
+
+
+
+        /// <summary>
         /// Check if <see cref="IsDisposed"/> is <c>true</c> and if so, then throws <see cref="ObjectDisposedException"/>.
         /// </summary>
         /// <exception cref="ObjectDisposedException">If instance has been disposed.</exception>
@@ -431,6 +482,22 @@ namespace Masasamjant.Repositories.EntityFramework
                 return entityQuerySpecification;
 
             return new EntityQuerySpecification<T>(specification.Criteria);
+        }
+
+        private void CheckCurrentTransaction()
+        {
+            if (transaction != null)
+            {
+                if (transaction.TransactionState == RepositoryTransactionState.Uncommitted)
+                    throw new InvalidOperationException("Transaction already exists. Commit or rollback current transaction before creating new one.");
+                else
+                {
+                    if (!transaction.IsDisposed)
+                        transaction.Dispose();
+
+                    transaction = null;
+                }
+            }
         }
     }
 }

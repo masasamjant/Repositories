@@ -18,6 +18,8 @@
 
         public string LastName { get; internal set; } = string.Empty;
 
+        public byte[] Version { get; internal set; } = Array.Empty<byte>();
+
         public bool Equals(Character? other)
         {
             return other != null && Identifier.Equals(other.Identifier);
